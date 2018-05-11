@@ -22,11 +22,11 @@
         </td>
         <td>
             <audio controls>
-                <source src="https://docs.google.com/uc?export=open&id={{ song.id }}" type="audio/mp3">
+                <source src="{{ song.link }}" type="audio/mp3">
             </audio>
         </td>
         <td class="collapsing">
-            <i class="cloud download icon"></i>
+            <a href="/download/{{ song.id }}?return_url={{ request.path }}"> <i class="cloud download icon"></i> </a>
         </td>
     </tr>
     {% endfor %}

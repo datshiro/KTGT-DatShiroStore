@@ -4,4 +4,5 @@ from . import views
 
 urlpatterns = [
     path(r'', views.home, name='homepage'),
+    path(r'download/<song_id>', views.download, name='download_song')
 ]

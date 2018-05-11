@@ -1,4 +1,5 @@
 import io
+import os
 
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 from httplib2 import Http
@@ -8,7 +9,7 @@ from apiclient.discovery import build
 from DatShiroShop.models import Song
 from api.auth import Auth
 
-SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly'
+SCOPES = 'https://www.googleapis.com/auth/drive'
 store = file.Storage('credentials.json')
 auth = Auth(SCOPES, store)
 creds = auth.getCredentials()
@@ -62,17 +63,20 @@ def uploadFile(filename,filepath,mimetype):
     print('File ID: %s' % file.get('id'))
 
 
-def downloadFile(file_id,filepath):
+def downloadFile(file_id, file_name):
+    file_path= os.environ['USERPROFILE'] + "\\Downloads"
     request = service.files().get_media(fileId=file_id)
     fh = io.BytesIO()
     downloader = MediaIoBaseDownload(fh, request)
     done = False
+    full_path=file_path+ "\\" + file_name if file_name else file_id
     while done is False:
         status, done = downloader.next_chunk()
         print("Download %d%%." % int(status.progress() * 100))
-    with io.open(filepath,'wb') as f:
+    with io.open(full_path,'wb') as f:
         fh.seek(0)
         f.write(fh.read())
+    print("Download success: " + full_path)
 
 
 def createFolder(name):
