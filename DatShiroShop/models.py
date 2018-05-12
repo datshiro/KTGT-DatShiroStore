@@ -4,9 +4,10 @@ from django.db import models
 # Create your models here.
 class Song(models.Model):
     id = models.CharField(max_length=20, primary_key=True)
-    name = models.CharField(null=True, blank=True, max_length=100)
+    name = models.CharField(null=True, blank=True, max_length=100, unique=True)
     link = models.CharField(null=True, blank=True, max_length=200)
     author = models.CharField(null=True, blank=True, max_length=100)
+    extension = models.CharField(null=True, blank=True, max_length=20)
     price = models.FloatField(default=0)
 
     def __str__(self):

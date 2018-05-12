@@ -35,6 +35,7 @@ def get_file(fileID):
 
 
 def load_files_to_sqlite():
+    Song.objects.all().delete()
     results = service.files().list(
         pageSize=10, fields="nextPageToken, files(id, name)", q="'{0}' in parents".format(shiro_store_folder_id)).execute()
     items = results.get('files', [])
@@ -44,32 +45,31 @@ def load_files_to_sqlite():
         print('Files:')
         for item in items:
             print('{0} ({1})'.format(item['name'], item['id']))
-            name = item['name']
             id = item['id']
-            author = name.rsplit(' - ')[1]
-            name = name.rsplit(' - ')[0]
-            song = Song(name=name, id=id, author=author)
+            name = item['name'].rsplit(' - ')[0]
+            author, extension = item['name'].rsplit(' - ')[1].rsplit('.', 1)
+            song = Song(name=name, id=id, author=author, extension=extension)
             song.save()
             print('Saved to database')
 
 
-def uploadFile(filename,filepath,mimetype):
-    file_metadata = {'name': filename}
+def uploadFile(filename, filepath, mimetype):
+    file_metadata = {'name': filename, 'parents': ['1E1_y5_-vW6Qwvh0aXkQ3DK5cYq2ZaVY2']}
     media = MediaFileUpload(filepath,
                             mimetype=mimetype)
     file = service.files().create(body=file_metadata,
                                         media_body=media,
                                         fields='id').execute()
-    print('File ID: %s' % file.get('id'))
+    return file.get('id')
 
 
 def downloadFile(file_id, file_name):
-    file_path= os.environ['USERPROFILE'] + "\\Downloads"
+    file_path = os.path.expanduser(os.sep.join(["~", "Downloads"]))
     request = service.files().get_media(fileId=file_id)
     fh = io.BytesIO()
     downloader = MediaIoBaseDownload(fh, request)
     done = False
-    full_path=file_path+ "\\" + file_name if file_name else file_id
+    full_path = file_path + "\\" + file_name if file_name else file_id
     while done is False:
         status, done = downloader.next_chunk()
         print("Download %d%%." % int(status.progress() * 100))

@@ -1,11 +1,10 @@
-from django.conf.urls import url
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
-
+from django.shortcuts import render, redirect
 
 # Create your views here.
+from DatShiroShop.forms import UploadFileForm
 from DatShiroShop.models import Song
-from api.drive_api import list_files, get_file, load_files_to_sqlite, downloadFile
+from api.drive_api import list_files, get_file, load_files_to_sqlite, downloadFile, uploadFile
 
 
 def home(request):
@@ -22,3 +21,26 @@ def download(request, song_id):
     print("Downloaded")
     return HttpResponseRedirect(request.GET.get('return_url'))
 
+
+def upload(request):
+     # if this is a POST request we need to process the form data
+    if request.method == 'POST':
+        # create a form instance and populate it with data from the request:
+        form = UploadFileForm(request.POST, request.FILES)
+        # check whether it's valid:
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            author = form.cleaned_data['author']
+            price = form.cleaned_data['price']
+            my_file = request.FILES['myFile']
+            extension = my_file.name.rsplit('.', 1)[1]
+            file_id = uploadFile(name + " - " + author + "." + extension, my_file.temporary_file_path(), my_file.content_type)
+            new_song = Song(id=file_id, name=name, author=author, extension=extension, price=price)
+            new_song.save()
+            return redirect('homepage')
+
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = UploadFileForm()
+    return render(request, 'upload.html', {'form': form})

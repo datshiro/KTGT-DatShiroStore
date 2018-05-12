@@ -6,8 +6,12 @@
 <table class="ui celled striped table">
     <thead>
     <tr>
-        <th colspan="3">
+        <th colspan="4">
             Dat Shiro Store Music
+            <div class="ui right floated small primary labeled icon button"
+                        onclick="window.location.replace('{% url 'upload' %}');" >
+                <i class="upload icon"></i> Upload
+            </div>
         </th>
     </tr>
     </thead>
@@ -33,4 +37,5 @@
     </tbody>
 </table>
 {% endif %}
+
 {% endblock %}
