@@ -1,8 +1,9 @@
+from django.contrib.auth import authenticate
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 
 # Create your views here.
-from DatShiroShop.forms import UploadFileForm
+from DatShiroShop.forms import UploadFileForm, SignUpForm
 from DatShiroShop.models import Song
 from api.drive_api import list_files, get_file, load_files_to_sqlite, downloadFile, uploadFile
 
@@ -44,3 +45,22 @@ def upload(request):
     else:
         form = UploadFileForm()
     return render(request, 'upload.html', {'form': form})
+
+
+def login(request):
+    return render(request, 'sites/login.html', {'form':form})
+
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            login(request, user)
+            return redirect('home')
+    else:
+        form = SignUpForm()
+    return render(request, 'sites/signup.html', {'form':form})

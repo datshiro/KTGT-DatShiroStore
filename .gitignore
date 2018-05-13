@@ -1,3 +1,7 @@
 .idea/
 DatShiroShop/__pycache__/
 api/__pycache__/
+
+DatShiroShop/migrations/__pycache__/
+
+KTGT/__pycache__/
