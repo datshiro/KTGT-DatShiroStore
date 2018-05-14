@@ -30,7 +30,17 @@
             </audio>
         </td>
         <td class="collapsing">
-            <a href="/download/{{ song.id }}?return_url={{ request.path }}"> <i class="cloud download icon"></i> </a>
+            {% if song in user.songs.all%}
+                <a>
+                    <i class="certificate icon"></i> See Signature
+                </a>
+            {% else %}
+                <a href="{% url 'buy_song' song.id%}">
+                    <i class="money bill alternate outline icon"></i> Get now!
+                </a>
+            {% endif %}
+
+            <!--<a href="/download/{{ song.id }}?return_url={{ request.path }}"> <i class="cloud download icon"></i> </a>-->
         </td>
     </tr>
     {% endfor %}

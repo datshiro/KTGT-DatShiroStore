@@ -16,6 +16,8 @@ creds = auth.getCredentials()
 shiro_store_folder_id = '1E1_y5_-vW6Qwvh0aXkQ3DK5cYq2ZaVY2'
 service = build('drive', 'v3', http=creds.authorize(Http()))
 
+downloads_path = os.path.expanduser(os.sep.join(["~", "Downloads"]))
+
 
 def list_files(size=10):
     results = service.files().list(
@@ -53,8 +55,8 @@ def load_files_to_sqlite():
             print('Saved to database')
 
 
-def uploadFile(filename, filepath, mimetype):
-    file_metadata = {'name': filename, 'parents': ['1E1_y5_-vW6Qwvh0aXkQ3DK5cYq2ZaVY2']}
+def uploadFile(filename, filepath, mimetype, folder_id=shiro_store_folder_id):
+    file_metadata = {'name': filename, 'parents': ['%s' % folder_id]}
     media = MediaFileUpload(filepath,
                             mimetype=mimetype)
     file = service.files().create(body=file_metadata,
@@ -63,13 +65,12 @@ def uploadFile(filename, filepath, mimetype):
     return file.get('id')
 
 
-def downloadFile(file_id, file_name):
-    file_path = os.path.expanduser(os.sep.join(["~", "Downloads"]))
+def downloadFile(file_id, file_name, file_path=downloads_path):
     request = service.files().get_media(fileId=file_id)
     fh = io.BytesIO()
     downloader = MediaIoBaseDownload(fh, request)
     done = False
-    full_path = file_path + "\\" + file_name if file_name else file_id
+    full_path = file_path + os.sep + file_name if file_name else file_id
     while done is False:
         status, done = downloader.next_chunk()
         print("Download %d%%." % int(status.progress() * 100))
@@ -77,6 +78,7 @@ def downloadFile(file_id, file_name):
         fh.seek(0)
         f.write(fh.read())
     print("Download success: " + full_path)
+    return full_path
 
 
 def createFolder(name):

@@ -1,5 +1,8 @@
+import os
+
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as auth_login
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
@@ -12,9 +15,11 @@ from api.drive_api import list_files, get_file, load_files_to_sqlite, downloadFi
 
 def home(request):
     songs = Song.objects.all()
-    # load_files_to_sqlite()
-    # list_files()
-    return render(request, 'index.html', {'songs': songs})
+    user_id = request.session.get('user_id', None)
+    user = None
+    if user_id:
+        user = Profile.objects.get(user=user_id)
+    return render(request, 'index.html', {'songs': songs, 'user': user})
 
 
 def download(request, song_id):
@@ -61,3 +66,20 @@ def signup(request):
     else:
         form = SignUpForm()
     return render(request, 'sites/signup.html', {'form':form})
+
+
+@login_required
+def buy_song(request, song_id):
+    #Get Song From Drive
+    print("Start buy music")
+    file_path = os.path.expanduser(os.sep.join(["~", "Downloads"]))
+    downloaded_file_path = downloadFile(song_id, file_name=song_id + str(request.session.get('user_id', None)), file_path=file_path)
+    song_file = open(downloaded_file_path, 'rb')
+    read_file = (song_file.read())
+    #Sign Signature To Song
+    #Upload Song to User Folder
+    #Update Archived Song to Profile
+    #Delete signed song on local
+    # return signed_song
+    return HttpResponse(read_file)
+    pass
