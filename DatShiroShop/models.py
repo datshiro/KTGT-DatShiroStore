@@ -1,14 +1,20 @@
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 
 # Create your models here.
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
 class Song(models.Model):
     id = models.CharField(max_length=20, primary_key=True)
-    name = models.CharField(null=True, blank=True, max_length=100, unique=True)
+    name = models.CharField('Song Name', null=True, blank=True, max_length=100, unique=True)
     link = models.CharField(null=True, blank=True, max_length=200)
-    author = models.CharField(null=True, blank=True, max_length=100)
+    author = models.CharField('Author', null=True, blank=True, max_length=100)
     extension = models.CharField(null=True, blank=True, max_length=20)
-    price = models.FloatField(default=0)
+    price = models.FloatField('Price', default=0)
 
     def __str__(self):
         if self.author is None:
@@ -21,10 +27,15 @@ class Song(models.Model):
         super(Song,self).save(*args, **kargs)
 
 
-class User(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField(blank=True, null=True)
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     songs = models.ManyToManyField(Song)
 
     def __str__(self):
-        return self.name + " - " + self.email
+        return self.user.username
+
+    @receiver(post_save, sender=User)
+    def update_user_profile(sender, instance, created, **kwargs):
+        if created:
+            Profile.objects.create(user=instance)
+        instance.profile.save()

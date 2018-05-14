@@ -1,10 +1,12 @@
 from django.contrib.auth import authenticate
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 
 # Create your views here.
 from DatShiroShop.forms import UploadFileForm, SignUpForm
-from DatShiroShop.models import Song
+from DatShiroShop.models import Song, Profile
 from api.drive_api import list_files, get_file, load_files_to_sqlite, downloadFile, uploadFile
 
 
@@ -40,7 +42,6 @@ def upload(request):
             new_song.save()
             return redirect('homepage')
 
-
     # if a GET (or any other method) we'll create a blank form
     else:
         form = UploadFileForm()
@@ -48,7 +49,7 @@ def upload(request):
 
 
 def login(request):
-    return render(request, 'sites/login.html', {'form':form})
+    return render(request, 'sites/login.html')
 
 
 def signup(request):
@@ -59,8 +60,8 @@ def signup(request):
             username = form.cleaned_data.get('username')
             raw_password = form.cleaned_data.get('password1')
             user = authenticate(username=username, password=raw_password)
-            login(request, user)
-            return redirect('home')
+            auth_login(request, user)
+            return redirect('homepage')
     else:
         form = SignUpForm()
     return render(request, 'sites/signup.html', {'form':form})
