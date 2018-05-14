@@ -48,10 +48,6 @@ def upload(request):
     return render(request, 'upload.html', {'form': form})
 
 
-def login(request):
-    return render(request, 'sites/login.html')
-
-
 def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)

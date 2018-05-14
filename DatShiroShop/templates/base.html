@@ -42,15 +42,22 @@
                     <i class="search link icon"></i>
                 </div>
             </div>
-            <a class="ui item" href="{% url 'login' %}">
-                Login
-            </a>
-            <a class="ui item" href="{% url 'signup' %}">
-                Sign Up
-            </a>
-            <a class="ui item" href="{% url 'logout' %}">
-                Logout
-            </a>
+            {% if not request.session.username %}
+                <a class="ui item" href="{% url 'login' %}">
+                    Login
+                </a>
+                <a class="ui item" href="{% url 'signup' %}">
+                    Sign Up
+                </a>
+            {% else %}
+                <a class="ui item">
+                    Hello, {{ request.session.username }}
+                </a>
+                <a class="ui item" href="{% url 'logout' %}">
+                    Logout
+                </a>
+            {% endif %}
+
         </div>
     </div>
     {% endblock %}
