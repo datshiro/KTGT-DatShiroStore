@@ -1,6 +1,7 @@
 import io
 import os
 
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 from httplib2 import Http
 from oauth2client import file
@@ -14,14 +15,15 @@ store = file.Storage('credentials.json')
 auth = Auth(SCOPES, store)
 creds = auth.getCredentials()
 shiro_store_folder_id = '1E1_y5_-vW6Qwvh0aXkQ3DK5cYq2ZaVY2'
+shiro_store_user_folder_id = '11PJLtUpw2U1u7Sm-acxYYaoi_QbIWhg5'
 service = build('drive', 'v3', http=creds.authorize(Http()))
 
 downloads_path = os.path.expanduser(os.sep.join(["~", "Downloads"]))
 
 
-def list_files(size=10):
+def list_files(size=10, folder_id=shiro_store_folder_id):
     results = service.files().list(
-        pageSize=10, fields="nextPageToken, files(id, name)", q="'{0}' in parents".format(shiro_store_folder_id)).execute()
+        pageSize=10, fields="nextPageToken, files(id, name)", q="'{0}' in parents".format(folder_id)).execute()
     items = results.get('files', [])
     if not items:
         print('No files found.')
@@ -29,6 +31,7 @@ def list_files(size=10):
         print('Files:')
         for item in items:
             print('{0} ({1})'.format(item['name'], item['id']))
+    return items
 
 
 def get_file(fileID):
@@ -62,6 +65,7 @@ def uploadFile(filename, filepath, mimetype, folder_id=shiro_store_folder_id):
     file = service.files().create(body=file_metadata,
                                         media_body=media,
                                         fields='id').execute()
+    print("Uploaded file ", file.get('id'))
     return file.get('id')
 
 
@@ -83,17 +87,40 @@ def downloadFile(file_id, file_name, file_path=downloads_path):
 
 def createFolder(name):
     file_metadata = {
-    'name': name,
-    'mimeType': 'application/vnd.google-apps.folder'
+        'name': name,
+        'mimeType': 'application/vnd.google-apps.folder',
+        'parents': [shiro_store_user_folder_id],
     }
-    file = service.files().create(body=file_metadata,
-                                        fields='id').execute()
-    print ('Folder ID: %s' % file.get('id'))
+    user_permission = {
+        'role': 'reader',
+        'type': 'anyone'
+    }
+    file = service.files().create(body=file_metadata, fields='id').execute()
+
+    def callback(request_id, response, exception):
+        if exception:
+            # Handle error
+            print
+            exception
+        else:
+            print
+            "Permission Id: %s" % response.get('id')
+
+    batch = service.new_batch_http_request(callback=callback)
+    batch.add(service.permissions().create(
+        fileId=file.get('id'),
+        body=user_permission,
+        fields='id',
+    ))
+    batch.execute()
+    # permission = service.permissions().create(fileId=file.get('id'),body=file_metadata,fields='id').execute()
+    print('Folder ID: %s' % file.get('id'))
+    return file.get('id')
 
 
 def searchFile(size,query):
     results = service.files().list(
-    pageSize=size,fields="nextPageToken, files(id, name, kind, mimeType)",q=query).execute()
+    pageSize=size, fields="nextPageToken, files(id, name, kind, mimeType)", q=query).execute()
     items = results.get('files', [])
     if not items:
         print('No files found.')
@@ -102,3 +129,11 @@ def searchFile(size,query):
         for item in items:
             print(item)
             print('{0} ({1})'.format(item['name'], item['id']))
+
+
+def deleteFile(file_id):
+    try:
+        results = service.files().delete(fileId=file_id).execute()
+    except HttpError as e:
+        print(e.content.message)
+    print("Removed file ", file_id)

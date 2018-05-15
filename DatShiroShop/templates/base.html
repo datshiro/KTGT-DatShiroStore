@@ -50,8 +50,8 @@
                     Sign Up
                 </a>
             {% else %}
-                <a class="ui item">
-                    Hello, {{ request.session.username }}
+                <a class="ui item" href="{% url 'info' request.session.username %}">
+                    Hello, {{ request.session.fullname }}
                 </a>
                 <a class="ui item" href="{% url 'logout' %}">
                     Logout

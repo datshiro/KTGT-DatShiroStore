@@ -2,16 +2,12 @@
 
 {% block content %}
 
-{% if songs|length > 0 %}
+{% if songs.count > 0 %}
 <table class="ui celled striped table">
     <thead>
     <tr>
         <th colspan="4">
-            Dat Shiro Store Music
-            <div class="ui right floated small primary labeled icon button"
-                        onclick="window.location.replace('{% url 'upload' %}');" >
-                <i class="upload icon"></i> Upload
-            </div>
+            {{ user.get_full_name }} 's Playlist
         </th>
     </tr>
     </thead>
@@ -30,7 +26,7 @@
             </audio>
         </td>
         <td class="collapsing">
-            {% if song.name in user_name_songs %}
+            {% if song in user.profile.songs.all%}
                 <a>
                     <i class="certificate icon"></i> See Signature
                 </a>

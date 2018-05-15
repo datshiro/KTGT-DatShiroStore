@@ -1,25 +1,33 @@
+import operator
 import os
+from functools import reduce
 
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as auth_login
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 
 # Create your views here.
 from DatShiroShop.forms import UploadFileForm, SignUpForm
 from DatShiroShop.models import Song, Profile
-from api.drive_api import list_files, get_file, load_files_to_sqlite, downloadFile, uploadFile
+from api.drive_api import list_files, get_file, load_files_to_sqlite, downloadFile, uploadFile, createFolder, deleteFile
 
 
 def home(request):
-    songs = Song.objects.all()
+    list_songs = list_files()
+    songs = []
+    for song in list_songs:
+        s = Song.objects.get(pk=song['id'])
+        songs.append(s)
     user_id = request.session.get('user_id', None)
     user = None
     if user_id:
-        user = Profile.objects.get(user=user_id)
-    return render(request, 'index.html', {'songs': songs, 'user': user})
+        user = User.objects.get(pk=user_id)
+        user_name_songs = [song['name'] for song in user.profile.songs.values()]
+    return render(request, 'index.html', {'songs': songs, 'user': user, 'user_name_songs': user_name_songs})
 
 
 def download(request, song_id):
@@ -30,6 +38,7 @@ def download(request, song_id):
     return HttpResponseRedirect(request.GET.get('return_url'))
 
 
+@login_required()
 def upload(request):
      # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -42,9 +51,19 @@ def upload(request):
             price = form.cleaned_data['price']
             my_file = request.FILES['myFile']
             extension = my_file.name.rsplit('.', 1)[1]
-            file_id = uploadFile(name + " - " + author + "." + extension, my_file.temporary_file_path(), my_file.content_type)
+            user = User.objects.get(pk=request.session['user_id'])
+            if user.profile.drive_folder_id:
+                folder_id = user.profile.drive_folder_id
+            else:
+                folder_id = createFolder(user.username)
+                user.profile.drive_folder_id = folder_id
+                user.profile.save()
+            file_id = uploadFile(name + " - " + author + "." + extension, my_file.temporary_file_path(), my_file.content_type, folder_id=folder_id)
+
             new_song = Song(id=file_id, name=name, author=author, extension=extension, price=price)
             new_song.save()
+            user.profile.songs.add(new_song)
+            user.profile.save()
             return redirect('homepage')
 
     # if a GET (or any other method) we'll create a blank form
@@ -68,7 +87,7 @@ def signup(request):
     return render(request, 'sites/signup.html', {'form':form})
 
 
-@login_required
+@login_required()
 def buy_song(request, song_id):
     #Get Song From Drive
     print("Start buy music")
@@ -83,3 +102,19 @@ def buy_song(request, song_id):
     # return signed_song
     return HttpResponse(read_file)
     pass
+
+
+@login_required()
+def info(request, username):
+    print("User info: ")
+    user = User.objects.get(username=username)
+    print(user.profile)
+    list_songs_id = [song['id'] for song in user.profile.songs.values()]
+    print(list_songs_id)
+    # songs = Song.objects.get(id__contains=[list_songs_id])
+    # query = reduce(operator.and_, (Q(id__contains=item) for item in list_songs_id))
+    # songs = Song.objects.filter(query)
+    songs = user.profile.songs.all
+    print("Song: ", songs)
+
+    return render(request, 'sites/info.html', {'user': user, 'songs': songs})

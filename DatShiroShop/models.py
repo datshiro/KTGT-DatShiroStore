@@ -9,12 +9,13 @@ from django.dispatch import receiver
 
 
 class Song(models.Model):
-    id = models.CharField(max_length=20, primary_key=True)
-    name = models.CharField('Song Name', null=True, blank=True, max_length=100, unique=True)
+    id = models.CharField(max_length=20, primary_key=True, unique=True)
+    name = models.CharField('Song Name', null=True, blank=True, max_length=100)
     link = models.CharField(null=True, blank=True, max_length=200)
     author = models.CharField('Author', null=True, blank=True, max_length=100)
     extension = models.CharField(null=True, blank=True, max_length=20)
     price = models.FloatField('Price', default=0)
+    signature = models.CharField(blank=True, max_length=200)
 
     def __str__(self):
         if self.author is None:
