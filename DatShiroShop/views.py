@@ -2,6 +2,7 @@ import operator
 import os
 from functools import reduce
 
+from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required, permission_required
@@ -87,6 +88,7 @@ def signup(request):
             raw_password = form.cleaned_data.get('password1')
             user = authenticate(username=username, password=raw_password)
             auth_login(request, user)
+            messages.success(request, 'Register new account succeeded!')
             return redirect('homepage')
     else:
         form = SignUpForm()

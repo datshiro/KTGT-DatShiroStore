@@ -19,32 +19,32 @@
     </thead>
     <tbody>
     {% for song in songs %}
-    <tr>
-        <td class="collapsing">
-            <i class="dollar icon"></i> {{ song.price }}
-        </td>
-        <td>
-            <i class="music icon"></i>{{ song.name }} -  {{ song.author }}
-        </td>
-        <td>
-            <audio controls>
-                <source src="{{ song.link }}" type="audio/mp3">
-            </audio>
-        </td>
-        <td class="collapsing">
-            {% if song.name in user_name_songs %}
-                <a>
-                    <i class="certificate icon"></i> See Signature
-                </a>
-            {% else %}
-                <a href="{% url 'buy_song' song.id%}">
-                    <i class="money bill alternate outline icon"></i> Get now!
-                </a>
-            {% endif %}
+        <tr>
+            <td class="collapsing">
+                <i class="dollar icon"></i> {{ song.price }}
+            </td>
+            <td>
+                <i class="music icon"></i>{{ song.name }} -  {{ song.author }}
+            </td>
+            <td>
+                <audio controls>
+                    <source src="{{ song.link }}" type="audio/mp3">
+                </audio>
+            </td>
+            <td class="collapsing">
+                {% if song.name in user_name_songs %}
+                    <a>
+                        <i class="certificate icon"></i> See Signature
+                    </a>
+                {% else %}
+                    <a href="{% url 'buy_song' song.id%}">
+                        <i class="money bill alternate outline icon"></i> Get now!
+                    </a>
+                {% endif %}
 
-            <!--<a href="/download/{{ song.id }}?return_url={{ request.path }}"> <i class="cloud download icon"></i> </a>-->
-        </td>
-    </tr>
+                <!--<a href="/download/{{ song.id }}?return_url={{ request.path }}"> <i class="cloud download icon"></i> </a>-->
+            </td>
+        </tr>
     {% endfor %}
     </tbody>
 </table>

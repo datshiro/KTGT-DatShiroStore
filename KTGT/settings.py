@@ -125,3 +125,5 @@ STATIC_URL = '/static/'
 
 LOGIN_REDIRECT_URL = 'homepage'
 LOGIN_URL = 'login'
+
+ALLOWED_HOSTS = ['0.0.0.0']

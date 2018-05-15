@@ -18,7 +18,13 @@
 </head>
 <body>
     {% block message %}
-
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <p{% if message.tags %} class="ui message {{ message.tags }}"{% endif %}>{{ message }}</p>
+            {% endfor %}
+        </ul>
+        {% endif %}
     {% endblock %}
 
     {% block navigator %}
