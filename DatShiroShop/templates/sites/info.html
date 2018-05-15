@@ -3,7 +3,7 @@
 {% block content %}
 
 {% if songs.count > 0 %}
-<table class="ui celled striped table">
+<table class="ui celled striped table inverted grey">
     <thead>
     <tr>
         <th colspan="4">
@@ -27,7 +27,7 @@
         </td>
         <td class="collapsing">
             {% if song in user.profile.songs.all%}
-                <a>
+                <a style="color: white;">
                     <i class="certificate icon"></i> See Signature
                 </a>
             {% else %}

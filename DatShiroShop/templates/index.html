@@ -8,10 +8,12 @@
     <tr>
         <th colspan="4">
             Dat Shiro Store Music
+            {% if user and user.is_superuser %}
             <div class="ui right floated small primary labeled icon button"
                         onclick="window.location.replace('{% url 'upload' %}');" >
                 <i class="upload icon"></i> Upload
             </div>
+            {% endif %}
         </th>
     </tr>
     </thead>

@@ -13,6 +13,7 @@ from django.shortcuts import render, redirect
 # Create your views here.
 from DatShiroShop.forms import UploadFileForm, SignUpForm
 from DatShiroShop.models import Song, Profile
+from api import drive_api
 from api.drive_api import list_files, get_file, load_files_to_sqlite, downloadFile, uploadFile, createFolder, deleteFile
 
 
@@ -23,17 +24,15 @@ def home(request):
         s = Song.objects.get(pk=song['id'])
         songs.append(s)
     user_id = request.session.get('user_id', None)
-    user = None
-    if user_id:
-        user = User.objects.get(pk=user_id)
-        user_name_songs = [song['name'] for song in user.profile.songs.values()]
+    user = User.objects.get(pk=user_id) if user_id else None
+    user_name_songs = [song['name'] for song in user.profile.songs.values()] if user else []
     return render(request, 'index.html', {'songs': songs, 'user': user, 'user_name_songs': user_name_songs})
 
 
 def download(request, song_id):
     song = Song.objects.get(pk=song_id)
     print("Start download file name: " + song.name)
-    downloadFile(song_id, song.name + " - " + song.author)
+    downloadFile(song_id, song.name + " - " + song.author + "." + song.extension)
     print("Downloaded")
     return HttpResponseRedirect(request.GET.get('return_url'))
 
@@ -50,20 +49,27 @@ def upload(request):
             author = form.cleaned_data['author']
             price = form.cleaned_data['price']
             my_file = request.FILES['myFile']
+            print (my_file.content_type)
             extension = my_file.name.rsplit('.', 1)[1]
             user = User.objects.get(pk=request.session['user_id'])
-            if user.profile.drive_folder_id:
-                folder_id = user.profile.drive_folder_id
-            else:
-                folder_id = createFolder(user.username)
-                user.profile.drive_folder_id = folder_id
-                user.profile.save()
+            if not user.is_superuser:                           # if normal user, upload to their own directory
+                if user.profile.drive_folder_id:
+                    folder_id = user.profile.drive_folder_id
+                else:
+                    folder_id = createFolder(user.username)
+                    user.profile.drive_folder_id = folder_id
+                    user.profile.save()
+            else:                                       # if superuser upload to shiro store directory
+                folder_id = drive_api.shiro_store_folder_id
             file_id = uploadFile(name + " - " + author + "." + extension, my_file.temporary_file_path(), my_file.content_type, folder_id=folder_id)
 
             new_song = Song(id=file_id, name=name, author=author, extension=extension, price=price)
+            if not user.is_superuser:
+                new_song.owner = user
+                user.profile.songs.add(new_song)
+                user.profile.save()
             new_song.save()
-            user.profile.songs.add(new_song)
-            user.profile.save()
+
             return redirect('homepage')
 
     # if a GET (or any other method) we'll create a blank form
@@ -106,6 +112,8 @@ def buy_song(request, song_id):
 
 @login_required()
 def info(request, username):
+    if username != request.session['username']:
+        return redirect('info', username=request.session['username'])
     print("User info: ")
     user = User.objects.get(username=username)
     print(user.profile)
@@ -115,6 +123,5 @@ def info(request, username):
     # query = reduce(operator.and_, (Q(id__contains=item) for item in list_songs_id))
     # songs = Song.objects.filter(query)
     songs = user.profile.songs.all
-    print("Song: ", songs)
 
     return render(request, 'sites/info.html', {'user': user, 'songs': songs})

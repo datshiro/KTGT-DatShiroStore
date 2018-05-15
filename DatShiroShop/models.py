@@ -16,11 +16,12 @@ class Song(models.Model):
     extension = models.CharField(null=True, blank=True, max_length=20)
     price = models.FloatField('Price', default=0)
     signature = models.CharField(blank=True, max_length=200)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         if self.author is None:
             self.author = " "
-        return self.name + " - " + self.author
+        return self.name + " - " + self.author + " | " + self.id
 
     def save(self, *args, **kargs):
         if self.link is None:
