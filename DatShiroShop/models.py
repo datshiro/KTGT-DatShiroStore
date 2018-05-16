@@ -21,7 +21,10 @@ class Song(models.Model):
     def __str__(self):
         if self.author is None:
             self.author = " "
-        return self.name + " - " + self.author + " | " + self.id
+        owner = ""
+        if self.owner:
+            owner = "||| =====>Owner: " + (self.owner.username)
+        return self.name + " - " + self.author + " | " + self.id + owner
 
     def save(self, *args, **kargs):
         if self.link is None:

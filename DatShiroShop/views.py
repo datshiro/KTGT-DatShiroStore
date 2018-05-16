@@ -120,16 +120,13 @@ def buy_song(request, song_id):
     #Upload Song to User Folder
     # decoder = services.DecodeWAV()
     # msg = decoder.decode_file(encoded_file_path)
+    new_song_id = services.upload_new_song(user=user, song_id=song_id, file_path=encoded_file_path, signature=signature_message)
 
-    new_file_id = drive_api.uploadFile(user.name + " - " + user.author + "." + user.extension, new_file.)
-
-    #Update Archived Song to Profile
     #Delete on local
 
     # return signed_song
     # Save message to database
-    return HttpResponse(msg)
-    pass
+    return redirect('info', username=user.username)
 
 
 @login_required()
@@ -156,16 +153,17 @@ def ajax_signature(request, song_id):
 
 @csrf_protect
 def signature(request):
+    """
+    Get Signature from uploaded file
+    :param request:
+    :return:
+    """
     if request.POST:
         form = GetSignatureForm(request.POST, request.FILES)
         if form.is_valid():
             f = form.cleaned_data['myFile']
-            encoder = services.EncodeWAV()
             decoder = services.DecodeWAV()
-            encoded_file = encoder.encode_file(f.temporary_file_path(), 'Nguyen Quoc Dat Nguyen Quoc Dat Nguyen Quoc Dat Nguyen Quoc Dat Nguyen Quoc Dat Nguyen Quoc Dat')
-            new_file = open('encoded_file', 'wb')
-            new_file.write(encoded_file)
-            msg = decoder.decode_file('encoded_file')
+            msg = decoder.decode_file(file_path=f.temporary_file_path())
             print("file: ", f, "| Temporary path: ", f.temporary_file_path(), "| Msg: ", msg)
     else:
         form = GetSignatureForm()

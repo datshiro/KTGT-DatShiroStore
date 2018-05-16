@@ -87,15 +87,16 @@ class DecodeWAV:
             return self.msg
 
 
-def upload_song(user, song_id, file_path):
+def upload_new_song(user, song_id, file_path, signature=None):
+    #Get song info
     song = Song.objects.get(pk=song_id)
     name = song.name
     author = song.author
     price = song.price
     extension = song.extension = os.path.splitext(file_path)[1]
     mime_type = MimeTypes()
-    content_type = mime_type.guess_type(file_path)
-    print("Mime type: ", mime_type)
+    content_type = mime_type.guess_extension(file_path)
+    print("Mime type: ", content_type)
 
     if not user.is_superuser:  # if normal user, upload to their own directory
         if user.profile.drive_folder_id:
@@ -110,9 +111,17 @@ def upload_song(user, song_id, file_path):
     output_filename = name + " - " + author + "." + extension
     file_id = drive_api.uploadFile(output_filename, file_path, content_type, folder_id=folder_id)
 
+    # Build new song with info
     new_song = Song(id=file_id, name=name, author=author, extension=extension, price=price)
+    if signature:
+        new_song.signature = signature
+
     if not user.is_superuser:
         new_song.owner = user
-        user.profile.songs.add(new_song)
+        new_song.save()
+        user.profile.songs.add(new_song)        # Update Archived Song to Profile
         user.profile.save()
-    new_song.save()
+    else:
+        new_song.save()
+
+    return file_id
