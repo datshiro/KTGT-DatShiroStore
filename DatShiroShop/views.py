@@ -127,3 +127,8 @@ def info(request, username):
     songs = user.profile.songs.all
 
     return render(request, 'sites/info.html', {'user': user, 'songs': songs})
+
+
+def get_signature(request, song_id):
+    song = Song.objects.get(pk=song_id)
+    return HttpResponse(song.signature)

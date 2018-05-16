@@ -10,4 +10,5 @@ urlpatterns = [
     path(r'signup', views.signup, name='signup'),
     path(r'buy/<song_id>', views.buy_song, name='buy_song'),
     path(r'info/<username>', views.info, name='info'),
+    path(r'signature/<song_id>', views.get_signature, name='signature'),
 ]
