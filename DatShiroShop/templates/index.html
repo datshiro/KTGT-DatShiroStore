@@ -59,7 +59,7 @@
                         <i class="certificate icon"></i> See Signature
                     </button>
                 {% else %}
-                    <button class="ui button tiny yellow" href="{% url 'buy_song' song.id%}">
+                    <button class="ui button tiny yellow" onclick="location.href = '{% url 'buy_song' song.id%}';">
                         <i class="money bill alternate outline icon"></i> Get now!
                     </button>
                 {% endif %}

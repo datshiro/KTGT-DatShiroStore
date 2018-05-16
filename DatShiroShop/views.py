@@ -1,3 +1,4 @@
+import datetime
 import operator
 import os
 from functools import reduce
@@ -100,18 +101,34 @@ def signup(request):
 
 @login_required()
 def buy_song(request, song_id):
+    print("-------------Buy Song---------------")
+    # Get user info
+    user = User.objects.get(pk=request.session['user_id'])
+
     #Get Song From Drive
     print("Start buy music")
     file_path = os.path.expanduser(os.sep.join(["~", "Downloads"]))
-    downloaded_file_path = downloadFile(song_id, file_name=song_id + str(request.session.get('user_id', None)), file_path=file_path)
-    song_file = open(downloaded_file_path, 'rb')
-    read_file = (song_file.read())
+    downloaded_file_name = "{0} - {1}".format(song_id, str(user.id))
+    downloaded_file_path = downloadFile(file_id=song_id, file_name=downloaded_file_name, file_path=services.downloads_path)
+
     #Sign Signature To Song
+    signature_message = "Signed by user: \"{0}\" - {1}".format(request.session['username'], str(datetime.datetime.now()))
+    encoder = services.EncodeWAV()
+    encoded_file_path = encoder.encode_file(file_path=downloaded_file_path, msg=signature_message, file_name=downloaded_file_name)
+
+
     #Upload Song to User Folder
+    # decoder = services.DecodeWAV()
+    # msg = decoder.decode_file(encoded_file_path)
+
+    new_file_id = drive_api.uploadFile(user.name + " - " + user.author + "." + user.extension, new_file.)
+
     #Update Archived Song to Profile
-    #Delete signed song on local
+    #Delete on local
+
     # return signed_song
-    return HttpResponse(read_file[8:11])
+    # Save message to database
+    return HttpResponse(msg)
     pass
 
 
@@ -145,11 +162,11 @@ def signature(request):
             f = form.cleaned_data['myFile']
             encoder = services.EncodeWAV()
             decoder = services.DecodeWAV()
-            encoded_file = encoder.encode_file(f.temporary_file_path(), 'Nguyen Quoc Dat')
+            encoded_file = encoder.encode_file(f.temporary_file_path(), 'Nguyen Quoc Dat Nguyen Quoc Dat Nguyen Quoc Dat Nguyen Quoc Dat Nguyen Quoc Dat Nguyen Quoc Dat')
             new_file = open('encoded_file', 'wb')
             new_file.write(encoded_file)
             msg = decoder.decode_file('encoded_file')
-            print("file: ", f, " Temporary path: ", f.temporary_file_path(), "Msg: ", msg)
+            print("file: ", f, "| Temporary path: ", f.temporary_file_path(), "| Msg: ", msg)
     else:
         form = GetSignatureForm()
     return render(request, 'signature.html', {'form': form})

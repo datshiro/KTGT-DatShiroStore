@@ -1,9 +1,15 @@
 import os
+from mimetypes import MimeTypes
 
-from api.drive_api import downloadFile
+from django.contrib.auth.models import User
+
+from DatShiroShop.models import Song
+from api import drive_api
+from api.drive_api import downloadFile, createFolder
 
 from sys import argv
 
+downloads_path = os.path.expanduser(os.sep.join(["~", "Downloads"]))
 
 class EncodeWAV:
 
@@ -14,7 +20,7 @@ class EncodeWAV:
         self.encoded_file = ''
         self.processing_byte_ord = self.header_offset
 
-    def encode_file(self, file_path, msg):
+    def encode_file(self, file_path, msg, file_name):
         origin_file = open(file_path, 'rb').read()
         origin_file = bytearray(origin_file)
         self.encoded_file = origin_file
@@ -26,7 +32,11 @@ class EncodeWAV:
         else:
             self.error_msg += "Invalid WAV File\n"
             return None
-        return self.encoded_file
+        full_path = downloads_path + os.sep + file_name
+        fh = open(full_path, 'wb')
+        fh.write(self.encoded_file)
+        fh.close()
+        return full_path
 
     def hide(self, msg):
         for c in msg:
@@ -53,78 +63,56 @@ class DecodeWAV:
         processing_byte_ord = self.header_offset
         if b"WAV" in encoded_file[8:11]:
             # get msg length
-            temp_byte = []
+            temp_byte = ""
             while True:
-                temp_byte.append(b % 2 for b in encoded_file[processing_byte_ord:processing_byte_ord+8])
+                for b in encoded_file[processing_byte_ord:processing_byte_ord + 8]:
+                    temp_byte += (str(b % 2))
+
                 decrypted_char = chr(int(temp_byte, 2))
                 self.msg += decrypted_char
-                temp_byte = []
+                temp_byte = ""
                 processing_byte_ord += 8
                 if decrypted_char == '$':
                     self.len_hidden_msg = int(self.msg[:-1])         # Ignore '$' char at the end
                     self.msg = ""
                     break
             for i in range(0, self.len_hidden_msg):
-                temp_byte.append(b % 2 for b in encoded_file[processing_byte_ord:processing_byte_ord + 8])
+                for b in encoded_file[processing_byte_ord:processing_byte_ord + 8]:
+                    temp_byte += (str(b % 2))
+
                 decrypted_char = chr(int(temp_byte, 2))
                 self.msg += decrypted_char
-                temp_byte = []
+                temp_byte = ""
                 processing_byte_ord += 8
             return self.msg
 
 
-def convertBinaryToMessage(array_bin_msg):
-    s = ''.join(str(i) for i in array_bin_msg)
-    return chr(int(s, base=2))
+def upload_song(user, song_id, file_path):
+    song = Song.objects.get(pk=song_id)
+    name = song.name
+    author = song.author
+    price = song.price
+    extension = song.extension = os.path.splitext(file_path)[1]
+    mime_type = MimeTypes()
+    content_type = mime_type.guess_type(file_path)
+    print("Mime type: ", mime_type)
 
-
-def decode_file(img):
-    byte = bytearray(img)
-    decrypted_message = ""
-    decrypted_char = ""
-    if "BM" in byte[:20]:
-        header_offset = 54
-    else:
-        print("Can't decrypt not BMP file")
-        return None
-    temp_byte = []
-    while True:
-        temp_byte.append(byte[header_offset] % 2)
-        header_offset += 1
-        if len(temp_byte) == 8:
-            decrypted_char = convertBinaryToMessage(temp_byte)
-            temp_byte = []
-        if decrypted_char is not '\x00' and not None:
-            decrypted_message += decrypted_char
-            decrypted_char = ""
+    if not user.is_superuser:  # if normal user, upload to their own directory
+        if user.profile.drive_folder_id:
+            folder_id = user.profile.drive_folder_id
         else:
-            break
-    return decrypted_message
+            folder_id = drive_api.createFolder(user.username)
+            user.profile.drive_folder_id = folder_id
+            user.profile.save()
+    else:  # if superuser upload to shiro store directory
+        folder_id = drive_api.shiro_store_folder_id
 
+    output_filename = name + " - " + author + "." + extension
+    file_id = drive_api.uploadFile(output_filename, file_path, content_type, folder_id=folder_id)
 
-if __name__ == "__main__":
-    data = open(argv[1], 'rb').read()
-    decrypted_message = decryptImage(data)
-    if decrypted_message is not None:
-        print("Hidden Message: " + decrypted_message)
-    else:
-        print("Failed to decrypt")
-
-
-def convertDecToBinary(number):
-    bin_array = []
-    while number != 0:
-        bin_array.insert(0,number % 2)
-        number /= 2
-    for i in range(0,8 - len(bin_array)):
-        bin_array.insert(0,0)
-    return bin_array
-
-def convertMessageToBinary(msg):
-    byte_msg = bytearray(msg)
-    bin_msg = []
-    for byte in byte_msg:
-        bin_msg += convertDecToBinary(byte)
-    return bin_msg
-
-
+    new_song = Song(id=file_id, name=name, author=author, extension=extension, price=price)
+    if not user.is_superuser:
+        new_song.owner = user
+        user.profile.songs.add(new_song)
+        user.profile.save()
+    new_song.save()
