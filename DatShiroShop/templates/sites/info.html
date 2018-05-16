@@ -1,5 +1,26 @@
 {% extends 'base.html' %}
 
+{% block javascript %}
+<script type="text/javascript">
+    function get_signature(e, song_id) {
+        var click_box = $(e.target).closest("td");
+        $.ajax({
+            url: click_box.attr("get-signature-url"),
+            method: 'GET', // or another (GET), whatever you need
+            data: {
+                //'song_id': song_id, // data you need to pass to your function
+                click: true
+            },
+            success: function (data) {
+                alert("Signature is: " + data)
+                // success callback
+                // you can process data returned by function from views.py
+            }
+        });
+    }
+</script>
+{% endblock %}
+
 {% block content %}
 
 {% if songs.count > 0 %}
@@ -25,15 +46,15 @@
                 <source src="{{ song.link }}" type="audio/mp3">
             </audio>
         </td>
-        <td class="collapsing">
+        <td class="collapsing"  id="signature-{{ song.id }}" get-signature-url="{% url 'ajax_signature' song.id %}">
             {% if song in user.profile.songs.all%}
-                <a style="color: white;">
+                <button class="ui button tiny yellow" style="color: white;" onclick="get_signature( event, '{{song.id}}')">
                     <i class="certificate icon"></i> See Signature
-                </a>
+                </button>
             {% else %}
-                <a href="{% url 'buy_song' song.id%}">
+                <button class="ui button tiny yellow" href="{% url 'buy_song' song.id%}">
                     <i class="money bill alternate outline icon"></i> Get now!
-                </a>
+                </button>
             {% endif %}
 
             <!--<a href="/download/{{ song.id }}?return_url={{ request.path }}"> <i class="cloud download icon"></i> </a>-->

@@ -12,7 +12,10 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 
 # Create your views here.
-from DatShiroShop.forms import UploadFileForm, SignUpForm
+from django.views.decorators.csrf import csrf_protect
+
+from DatShiroShop import services
+from DatShiroShop.forms import UploadFileForm, SignUpForm, GetSignatureForm
 from DatShiroShop.models import Song, Profile
 from api import drive_api
 from api.drive_api import list_files, get_file, load_files_to_sqlite, downloadFile, uploadFile, createFolder, deleteFile
@@ -108,7 +111,7 @@ def buy_song(request, song_id):
     #Update Archived Song to Profile
     #Delete signed song on local
     # return signed_song
-    return HttpResponse(read_file)
+    return HttpResponse(read_file[8:11])
     pass
 
 
@@ -129,6 +132,24 @@ def info(request, username):
     return render(request, 'sites/info.html', {'user': user, 'songs': songs})
 
 
-def get_signature(request, song_id):
+def ajax_signature(request, song_id):
     song = Song.objects.get(pk=song_id)
     return HttpResponse(song.signature)
+
+
+@csrf_protect
+def signature(request):
+    if request.POST:
+        form = GetSignatureForm(request.POST, request.FILES)
+        if form.is_valid():
+            f = form.cleaned_data['myFile']
+            encoder = services.EncodeWAV()
+            decoder = services.DecodeWAV()
+            encoded_file = encoder.encode_file(f.temporary_file_path(), 'Nguyen Quoc Dat')
+            new_file = open('encoded_file', 'wb')
+            new_file.write(encoded_file)
+            msg = decoder.decode_file('encoded_file')
+            print("file: ", f, " Temporary path: ", f.temporary_file_path(), "Msg: ", msg)
+    else:
+        form = GetSignatureForm()
+    return render(request, 'signature.html', {'form': form})

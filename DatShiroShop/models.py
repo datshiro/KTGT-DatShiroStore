@@ -26,7 +26,7 @@ class Song(models.Model):
     def save(self, *args, **kargs):
         if self.link is None:
             self.link = "https://docs.google.com/uc?export=open&id="+self.id
-        super(Song,self).save(*args, **kargs)
+        super(Song, self).save(*args, **kargs)
 
 
 class Profile(models.Model):

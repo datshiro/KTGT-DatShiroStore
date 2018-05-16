@@ -53,10 +53,10 @@
                     <source src="{{ song.link }}" type="audio/mp3">
                 </audio>
             </td>
-            <td class="collapsing ui center aligned" id="signature-{{ song.id }}" get-signature-url="{% url 'signature' song.id %}">
+            <td class="collapsing ui center aligned" id="signature-{{ song.id }}" get-signature-url="{% url 'ajax_signature' song.id %}">
                 {% if song.name in user_name_songs %}
-                    <button class="ui button tiny" onclick="get_signature( event, '{{song.id}}')">
-                        <i class="certificate icon" ></i> See Signature
+                    <button class="ui button tiny" onclick="get_signature(event, '{{ song.id }}')">
+                        <i class="certificate icon"></i> See Signature
                     </button>
                 {% else %}
                     <button class="ui button tiny yellow" href="{% url 'buy_song' song.id%}">

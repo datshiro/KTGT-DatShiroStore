@@ -14,6 +14,10 @@ class UploadFileForm(forms.ModelForm):
         fields = ['myFile', 'name', 'author', 'price']
 
 
+class GetSignatureForm(forms.Form):
+    myFile = FileField(label='Song File')
+
+
 class LoginForm(forms.Form):
     email = CharField(min_length=1, max_length=100)
 
