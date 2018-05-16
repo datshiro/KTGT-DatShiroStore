@@ -25,13 +25,14 @@ class EncodeWAV:
         origin_file = bytearray(origin_file)
         self.encoded_file = origin_file
 
-        if b"WAV" in origin_file[8:11]:
-            msg_len_str = str(len(msg))
-            self.hide(msg_len_str + self.DELIMITER)     # Insert Len of Msg
-            self.hide(msg)                              # Insert Msg
-        else:
-            self.error_msg += "Invalid WAV File\n"
-            return None
+        # if b"WAV" in origin_file[8:11]:
+        msg_len_str = str(len(msg))
+        self.hide(msg_len_str + self.DELIMITER)     # Insert Len of Msg
+        self.hide(msg)                              # Insert Msg
+        # else:
+        # self.error_msg += "Invalid WAV File\n"
+        # return None
+        # endif
         full_path = downloads_path + os.sep + file_name
         fh = open(full_path, 'wb')
         fh.write(self.encoded_file)
@@ -61,39 +62,42 @@ class DecodeWAV:
         encoded_file = open(file_path, 'rb').read()
         encoded_file = bytearray(encoded_file)
         processing_byte_ord = self.header_offset
-        if b"WAV" in encoded_file[8:11]:
-            # get msg length
+        # if b"WAV" in encoded_file[8:11]:
+        # get msg length
+        temp_byte = ""
+        while True:
+            for b in encoded_file[processing_byte_ord:processing_byte_ord + 8]:
+                temp_byte += (str(b % 2))
+
+            decrypted_char = chr(int(temp_byte, 2))
+            self.msg += decrypted_char
             temp_byte = ""
-            while True:
-                for b in encoded_file[processing_byte_ord:processing_byte_ord + 8]:
-                    temp_byte += (str(b % 2))
+            processing_byte_ord += 8
+            if decrypted_char == '$':
+                self.len_hidden_msg = int(self.msg[:-1])         # Ignore '$' char at the end
+                self.msg = ""
+                break
+        for i in range(0, self.len_hidden_msg):
+            for b in encoded_file[processing_byte_ord:processing_byte_ord + 8]:
+                temp_byte += (str(b % 2))
 
-                decrypted_char = chr(int(temp_byte, 2))
-                self.msg += decrypted_char
-                temp_byte = ""
-                processing_byte_ord += 8
-                if decrypted_char == '$':
-                    self.len_hidden_msg = int(self.msg[:-1])         # Ignore '$' char at the end
-                    self.msg = ""
-                    break
-            for i in range(0, self.len_hidden_msg):
-                for b in encoded_file[processing_byte_ord:processing_byte_ord + 8]:
-                    temp_byte += (str(b % 2))
-
-                decrypted_char = chr(int(temp_byte, 2))
-                self.msg += decrypted_char
-                temp_byte = ""
-                processing_byte_ord += 8
-            return self.msg
+            decrypted_char = chr(int(temp_byte, 2))
+            self.msg += decrypted_char
+            temp_byte = ""
+            processing_byte_ord += 8
+        return self.msg
+        # endif
 
 
 def upload_new_song(user, song_id, file_path, signature=None):
     #Get song info
+    print("Upload new song \nSong path: ", file_path)
     song = Song.objects.get(pk=song_id)
     name = song.name
     author = song.author
     price = song.price
     extension = song.extension = os.path.splitext(file_path)[1]
+    print("Extension: ", extension)
     mime_type = MimeTypes()
     content_type = mime_type.guess_extension(file_path)
     print("Mime type: ", content_type)

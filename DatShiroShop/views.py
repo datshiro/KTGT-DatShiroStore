@@ -104,11 +104,12 @@ def buy_song(request, song_id):
     print("-------------Buy Song---------------")
     # Get user info
     user = User.objects.get(pk=request.session['user_id'])
+    origin_song = Song.objects.get(pk=song_id)
 
     #Get Song From Drive
     print("Start buy music")
     file_path = os.path.expanduser(os.sep.join(["~", "Downloads"]))
-    downloaded_file_name = "{0} - {1}".format(song_id, str(user.id))
+    downloaded_file_name = "{0} - {1}.{2}".format(song_id, str(user.id), origin_song.extension)
     downloaded_file_path = downloadFile(file_id=song_id, file_name=downloaded_file_name, file_path=services.downloads_path)
 
     #Sign Signature To Song
