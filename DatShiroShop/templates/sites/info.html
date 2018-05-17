@@ -18,6 +18,15 @@
             }
         });
     }
+
+     function play_audio(audio){
+        $("audio").each(function(){
+            if( this != audio){
+                this.pause(); // Stop playing
+                this.currentTime = 0; // Reset time
+            }
+        });
+    }
 </script>
 {% endblock %}
 
@@ -42,7 +51,7 @@
             <i class="music icon"></i>{{ song.name }} -  {{ song.author }}
         </td>
         <td>
-            <audio controls>
+            <audio controls onplay="play_audio(this)">
                 <source src="{{ song.link }}" type="audio/mp3">
             </audio>
         </td>
