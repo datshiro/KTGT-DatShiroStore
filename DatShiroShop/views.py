@@ -23,14 +23,18 @@ from api.drive_api import list_files, get_file, load_files_to_sqlite, downloadFi
 
 
 def home(request):
+    user_id = request.session.get('user_id', None)
+    user = User.objects.get(pk=user_id) if user_id else None
+    user_name_songs = [song['name'] for song in user.profile.songs.values()] if user else []
+
     list_songs = list_files()
     songs = []
     for song in list_songs:
         s = Song.objects.get(pk=song['id'])
+        if s.name in user_name_songs:           # Update song id if that song user archived
+            s = user.profile.songs.values().get(name=s.name)
         songs.append(s)
-    user_id = request.session.get('user_id', None)
-    user = User.objects.get(pk=user_id) if user_id else None
-    user_name_songs = [song['name'] for song in user.profile.songs.values()] if user else []
+
     return render(request, 'index.html', {'songs': songs, 'user': user, 'user_name_songs': user_name_songs})
 
 
@@ -48,13 +52,13 @@ def upload(request):
     if request.method == 'POST':
         # create a form instance and populate it with data from the request:
         form = UploadFileForm(request.POST, request.FILES)
-        # check whether it's valid:
-        if form.is_valid():
+
+        if form.is_valid():     # check whether it's valid
             name = form.cleaned_data['name']
             author = form.cleaned_data['author']
             price = form.cleaned_data['price']
             my_file = request.FILES['myFile']
-            print (my_file.content_type)
+            print(my_file.content_type)
             extension = my_file.name.rsplit('.', 1)[1]
             user = User.objects.get(pk=request.session['user_id'])
             if not user.is_superuser:                           # if normal user, upload to their own directory
@@ -113,7 +117,7 @@ def buy_song(request, song_id):
     downloaded_file_path = downloadFile(file_id=song_id, file_name=downloaded_file_name, file_path=services.downloads_path)
 
     #Sign Signature To Song
-    signature_message = "Signed by user: \"{0}\" - {1}".format(request.session['username'], str(datetime.datetime.now()))
+    signature_message = "|Song [{2}] - Signed by user: \"{0}\" - {1}".format(request.session['username'], str(datetime.datetime.now()), origin_song.name)
     encoder = services.EncodeWAV()
     encoded_file_path = encoder.encode_file(file_path=downloaded_file_path, msg=signature_message, file_name=downloaded_file_name)
 
@@ -124,9 +128,11 @@ def buy_song(request, song_id):
     new_song_id = services.upload_new_song(user=user, song_id=song_id, file_path=encoded_file_path, signature=signature_message)
 
     #Delete on local
-
+    os.remove(downloaded_file_path)
+    print("Removed file: ", downloaded_file_path)
     # return signed_song
     # Save message to database
+    messages.success(request, "Succeeded buy song {0}".format(origin_song.name))
     return redirect('info', username=user.username)
 
 
@@ -170,7 +176,9 @@ def signature(request):
             f = form.cleaned_data['myFile']
             decoder = services.DecodeWAV()
             msg = decoder.decode_file(file_path=f.temporary_file_path())
+            file_name = f.name
             print("file: ", f, "| Temporary path: ", f.temporary_file_path(), "| Msg: ", msg)
+            return render(request, 'signature.html', {'form': form, 'msg': msg, 'file_name': file_name})
     else:
         form = GetSignatureForm()
     return render(request, 'signature.html', {'form': form})

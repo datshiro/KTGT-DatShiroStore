@@ -45,3 +45,6 @@ class Profile(models.Model):
         if created:
             Profile.objects.create(user=instance)
         instance.profile.save()
+
+    def get_list_songs(self):
+        return " | ".join([song.name for song in self.songs.all()])

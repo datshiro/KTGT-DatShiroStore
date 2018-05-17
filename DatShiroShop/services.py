@@ -26,7 +26,7 @@ class EncodeWAV:
         self.encoded_file = origin_file
 
         # if b"WAV" in origin_file[8:11]:
-        msg_len_str = str(len(msg))
+        msg_len_str = str(len(msg))         # Should check case len(msg) > file size
         self.hide(msg_len_str + self.DELIMITER)     # Insert Len of Msg
         self.hide(msg)                              # Insert Msg
         # else:
@@ -74,9 +74,12 @@ class DecodeWAV:
             temp_byte = ""
             processing_byte_ord += 8
             if decrypted_char == '$':
-                self.len_hidden_msg = int(self.msg[:-1])         # Ignore '$' char at the end
-                self.msg = ""
-                break
+                try:
+                    self.len_hidden_msg = int(self.msg[:-1])         # Ignore '$' char at the end
+                    self.msg = ""
+                    break
+                except ValueError:
+                    return "This file has no Signature"
         for i in range(0, self.len_hidden_msg):
             for b in encoded_file[processing_byte_ord:processing_byte_ord + 8]:
                 temp_byte += (str(b % 2))
@@ -96,7 +99,7 @@ def upload_new_song(user, song_id, file_path, signature=None):
     name = song.name
     author = song.author
     price = song.price
-    extension = song.extension = os.path.splitext(file_path)[1]
+    extension = song.extension = open(file_path).name.rsplit('.', 1)[1]
     print("Extension: ", extension)
     mime_type = MimeTypes()
     content_type = mime_type.guess_extension(file_path)
