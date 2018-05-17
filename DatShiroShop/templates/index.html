@@ -19,6 +19,16 @@
             }
         });
     }
+
+
+    function play_audio(audio){
+        $("audio").each(function(){
+            if( this != audio){
+                this.pause(); // Stop playing
+                this.currentTime = 0; // Reset time
+            }
+        });
+    }
 </script>
 {% endblock %}
 
@@ -28,7 +38,7 @@
 <table class="ui celled striped table">
     <thead>
     <tr>
-        <th colspan="4">
+        <th colspan="4" style="background-color: #fbbd08;">
             Dat Shiro Store Music
             {% if user and user.is_superuser %}
             <div class="ui right floated small primary labeled icon button"
@@ -49,7 +59,7 @@
                 <i class="music icon"></i>{{ song.name }} -  {{ song.author }}
             </td>
             <td>
-                <audio controls>
+                <audio controls {% if song.name in user_name_songs %} controlsList="nodownload" {% endif %} onplay="play_audio(this)">
                     <source src="{{ song.link }}" type="audio/mp3">
                 </audio>
             </td>
