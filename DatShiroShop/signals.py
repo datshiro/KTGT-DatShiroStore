@@ -32,4 +32,11 @@ def delete_on_drive(instance, using, **kwargs):
 
 @receiver(user_logged_out, sender=User)
 def message_logged_out(request, user, **kwargs):
-        messages.warning(request, 'Logged out!')
+    messages.warning(request, 'Logged out!')
+
+
+@receiver(pre_delete, sender=User)
+def delete_on_drive(instance, using, **kwargs):
+    print("Signal delete_on_drive")
+    if hasattr(instance, 'profile') and instance.profile.drive_folder_id:
+            deleteFile(instance.profile.drive_folder_id)

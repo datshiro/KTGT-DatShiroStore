@@ -135,5 +135,5 @@ def deleteFile(file_id):
     try:
         results = service.files().delete(fileId=file_id).execute()
     except HttpError as e:
-        print(e.content.message)
+        print(e.content)
     print("Removed file ", file_id)

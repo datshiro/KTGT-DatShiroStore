@@ -149,7 +149,12 @@ def info(request, username):
 
 def ajax_signature(request, song_id):
     song = Song.objects.get(pk=song_id)
-    return HttpResponse(song.signature)
+    if song.signature:  # in case query from info page
+        return HttpResponse(song.signature)
+    else:               # in case query from index
+        current_user = User.objects.get(pk=request.session['user_id'])
+        song = current_user.profile.songs.get(name=song.name)
+        return HttpResponse(song.signature)
 
 
 @csrf_protect
