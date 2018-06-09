@@ -59,7 +59,7 @@
                 <i class="music icon"></i>{{ song.name }} -  {{ song.author }}
             </td>
             <td>
-                <audio controls {% if song.name in user_name_songs %} controlsList="nodownload" {% endif %} onplay="play_audio(this)">
+                <audio controls {% if song.name not in user_name_songs %} controlsList="nodownload" {% endif %} onplay="play_audio(this)">
                     <source src="{{ song.link }}" type="audio/mp3">
                 </audio>
             </td>
